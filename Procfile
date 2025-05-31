@@ -1,0 +1,1 @@
+web: gunicorn quizp.wsgi:application --log-file -

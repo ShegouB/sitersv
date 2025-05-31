@@ -1,0 +1,215 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Dashboard Admin - Résumé des participants</title>
+  <link rel="stylesheet" href="{% static 'admin.css' %}"> <!-- Utilisation de la balise static pour CSS -->
+  <style>
+    body {
+      background: #101820;
+      color: #00f7ff;
+      font-family: Arial, sans-serif;
+      padding: 30px;
+    }
+    h1 { text-align: center; color: #00f7ff; }
+    table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+    th, td { padding: 10px 15px; border-bottom: 1px solid #00f7ff; text-align: left; }
+    th { background-color: #1f1f2e; text-align: center;}
+    tr:nth-child(even) { background-color: #1a1a2e; }
+    .mention-Excellent { color: gold; font-weight: bold; }
+    .mention-tresbien { color: lightgreen; font-weight: bold; }
+    .mention-bien { color: yellow; }
+    .mention-assezbien { color: orange; }
+    .mention-Insuffisant { color: #ff6b6b; } /* Ajout pour Insuffisant */
+
+    /* Style pour les inputs dans le tableau */
+    td input[type="number"] {
+      width: 60px;
+      padding: 5px;
+      background-color: #1f1f2e;
+      color: #00f7ff;
+      border: 1px solid #00f7ff;
+      border-radius: 3px;
+      text-align: center;
+    }
+    /* Style pour les boutons d'enregistrement */
+    td button {
+      padding: 5px 10px;
+      background-color: #00f7ff;
+      color: #101820;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    td button:hover {
+      background-color: #00c5cc;
+    }
+    .status-message {
+        margin-top: 5px;
+        font-size: 0.9em;
+        min-height: 1em; /* Pour éviter les sauts de page */
+    }
+    .status-success { color: lightgreen; }
+    .status-error { color: #ff6b6b; }
+  </style>
+</head>
+<body>
+  <h1>🧾 Tableau de Bord Admin</h1>
+  <table id="table-participants">
+    <thead>
+      <tr>
+        <th>Email</th>
+        <th>Prénom</th>
+        <th>Nom</th>
+        <th>Théorique</th>
+        <th>Pratique</th>
+        <th>Moyenne</th>
+        <th>Mention</th>
+        <th>Certificat</th>
+        <th>Action</th> <!-- NOUVELLE COLONNE -->
+      </tr>
+    </thead>
+    <tbody id="body-participants">
+      <!-- Dynamique via JS -->
+    </tbody>
+  </table>
+
+  <script>
+    // Fonction pour obtenir le token CSRF (important pour les requêtes POST à Django)
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+
+    async function loadParticipants() {
+      try {
+        const res = await fetch("/api/admin/participants/"); // Assurez-vous que cette URL est correcte
+        if (!res.ok) {
+            throw new Error(`Erreur HTTP ${res.status} lors du chargement des participants.`);
+        }
+        const data = await res.json();
+        const tbody = document.getElementById("body-participants");
+        tbody.innerHTML = ""; // Vider le tableau avant de le remplir
+
+        for (let p of data) {
+          const moyenne = parseFloat(p.note_finale).toFixed(1); // S'assurer que c'est un nombre et formater
+          let mentionClass = "mention-" + p.mention.replace(/\s+/g, ''); // ex: "mention-TrèsBien"
+
+          const row = document.createElement('tr');
+          row.innerHTML = `
+            <td>${p.email}</td>
+            <td>${p.prenom || '-'}</td>
+            <td>${p.nom || '-'}</td>
+            <td>${p.note_theorique}</td>
+            <td><input type="number" class="note-pratique-input" data-email="${p.email}" value="${p.note_pratique}" min="0" max="100"></td>
+            <td class="moyenne-cell">${moyenne}</td>
+            <td class="mention-cell ${mentionClass}">${p.mention}</td>
+            <td class="certificat-cell">${p.certificat ? "✅" : "❌"}</td>
+            <td>
+                <button class="save-btn" data-email="${p.email}">Enregistrer</button>
+                <div class="status-message" id="status-${p.email.replace(/[@.]/g, '')}"></div>
+            </td>
+          `;
+          tbody.appendChild(row);
+        }
+        addSaveButtonListeners(); // Ajouter les écouteurs après avoir créé les boutons
+      } catch (error) {
+        console.error("Erreur lors du chargement des participants:", error);
+        const tbody = document.getElementById("body-participants");
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color:red;">Erreur: ${error.message}</td></tr>`;
+      }
+    }
+
+    function addSaveButtonListeners() {
+        document.querySelectorAll('.save-btn').forEach(button => {
+            button.addEventListener('click', async (event) => {
+                const email = event.target.dataset.email;
+                const inputElement = document.querySelector(`.note-pratique-input[data-email="${email}"]`);
+                const newScore = parseInt(inputElement.value, 10);
+                const statusDiv = document.getElementById(`status-${email.replace(/[@.]/g, '')}`);
+
+                if (isNaN(newScore) || newScore < 0 || newScore > 100) {
+                    statusDiv.textContent = "Score invalide (0-100).";
+                    statusDiv.className = 'status-message status-error';
+                    return;
+                }
+                statusDiv.textContent = "Enregistrement...";
+                statusDiv.className = 'status-message';
+
+
+                try {
+                    const response = await fetch('/api/update-score/', { // Assurez-vous que cette URL est correcte
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrftoken // Important pour la protection CSRF de Django
+                        },
+                        body: JSON.stringify({
+                            email: email,
+                            note_pratique: newScore
+                        })
+                    });
+
+                    const result = await response.json();
+
+                    if (response.ok && result.success) {
+                        statusDiv.textContent = "Enregistré !";
+                        statusDiv.className = 'status-message status-success';
+                        // Mettre à jour la moyenne, la mention et le certificat dans la ligne du tableau
+                        const row = event.target.closest('tr');
+                        if (row) {
+                            row.querySelector('.moyenne-cell').textContent = parseFloat(result.finale).toFixed(1);
+                            // Il faudrait une logique pour re-calculer la mention et le certificat côté client ou les récupérer du serveur
+                            // Pour l'instant, on recharge tous les participants pour la simplicité, mais c'est moins optimal
+                            // loadParticipants(); // Dé-commentez pour recharger ou mettez à jour dynamiquement ci-dessous
+
+                            // Mise à jour dynamique (meilleure approche)
+                            const mention = result.mention || calculateMention(result.finale); // Si l'API renvoie la mention
+                            const certificat = result.certificat !== undefined ? result.certificat : (result.finale >= 60); // Si l'API renvoie le certificat
+
+                            row.querySelector('.mention-cell').textContent = mention;
+                            row.querySelector('.mention-cell').className = `mention-cell mention-${mention.replace(/\s+/g, '')}`;
+                            row.querySelector('.certificat-cell').textContent = certificat ? "✅" : "❌";
+                        }
+
+                    } else {
+                        statusDiv.textContent = `Erreur: ${result.error || 'Échec de la sauvegarde'}`;
+                        statusDiv.className = 'status-message status-error';
+                    }
+                } catch (err) {
+                    console.error("Erreur lors de la sauvegarde:", err);
+                    statusDiv.textContent = "Erreur de communication.";
+                    statusDiv.className = 'status-message status-error';
+                }
+                setTimeout(() => { statusDiv.textContent = ""; statusDiv.className = 'status-message';}, 3000); // Effacer le message après 3s
+            });
+        });
+    }
+
+    // Fonction utilitaire côté client pour calculer la mention (si l'API ne la renvoie pas sur update)
+    function calculateMention(score) {
+        if (score >= 90) return "Excellent";
+        if (score >= 80) return "Très Bien";
+        if (score >= 70) return "Bien";
+        if (score >= 60) return "Assez Bien";
+        return "Insuffisant";
+    }
+
+    loadParticipants(); // Charger les participants au chargement de la page
+  </script>
+</body>
+</html>
