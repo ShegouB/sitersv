@@ -213,7 +213,7 @@ from django.shortcuts import render
 
 @login_required
 def admin_custom(request):
-    return render(request, "quizapp/templates/admin.html")
+    return render(request, "admin.html")
 
 @csrf_exempt
 def get_score_details(request):
