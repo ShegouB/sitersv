@@ -12,7 +12,7 @@ urlpatterns = [
     path('api/save-name/', views.save_name),
     path('api/submit-quiz/', views.submit_quiz),
     path("api/is-admin/", views.is_admin),
-    path('admin-panel/', views.admin_custom),
+    path('admin-panel/', views.admin_custom, name='admin_custom_panel_url'),
     path('api/certificat/<str:email>/', views.download_certificat),
     path('api/score-details/', views.get_score_details),
     path('results/', views.public_results_page, name='public_results_page'),
