@@ -41,6 +41,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.contrib.sessions.middleware.SessionMiddleware',
     
     'django.middleware.common.CommonMiddleware',
@@ -126,7 +127,6 @@ import os # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles_prod' # collectstatic ira ici
-MIDDLEWARE.insert(1, 'whitenoise.middleware.WhiteNoiseMiddleware') # Juste après SecurityMiddleware
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # Default primary key field type
@@ -135,12 +135,12 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
-    "https://shegouB.github.io", # L'URL de votre site GitHub Pages
+    "https://shegoub.github.io", # L'URL de votre site GitHub Pages
 ]
 if DEBUG:
     CORS_ALLOWED_ORIGINS.extend(["http://127.0.0.1:5500", "http://localhost:5500", "null"])
 
-CSRF_TRUSTED_ORIGINS = ["https://shegouB.github.io"]
+CSRF_TRUSTED_ORIGINS = ["https://shegoub.github.io"]
 if DEBUG:
     CSRF_TRUSTED_ORIGINS.extend(["http://127.0.0.1:5500", "http://localhost:5500"])
 
@@ -166,3 +166,6 @@ CORS_ALLOW_METHODS = [
     'POST',
     'PUT',
 ]
+
+CORS_ALLOW_CREDENTIALS = True
+
