@@ -20,9 +20,6 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-*q@^_#ub-#)!i_h5)&ryez50eh&@i#m!rqo!0w@c9+8i*ty-lj'
-
 
 ALLOWED_HOSTS = []
 RENDER_EXTERNAL_HOSTNAME = os.environ.get('RENDER_EXTERNAL_HOSTNAME')
@@ -138,12 +135,12 @@ STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 CORS_ALLOWED_ORIGINS = [
-    "https://ShegouB.github.io", # L'URL de votre site GitHub Pages
+    "https://shegouB.github.io", # L'URL de votre site GitHub Pages
 ]
 if DEBUG:
     CORS_ALLOWED_ORIGINS.extend(["http://127.0.0.1:5500", "http://localhost:5500", "null"])
 
-CSRF_TRUSTED_ORIGINS = ["https://ShegouB.github.io"]
+CSRF_TRUSTED_ORIGINS = ["https://shegouB.github.io"]
 if DEBUG:
     CSRF_TRUSTED_ORIGINS.extend(["http://127.0.0.1:5500", "http://localhost:5500"])
 
