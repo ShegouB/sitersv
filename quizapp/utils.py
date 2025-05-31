@@ -187,7 +187,7 @@ def generate_certificat_pdf(participant):
     sig_name_w, sig_name_h = p_sig_name.wrapOn(c, content_width / 3, 20*mm) # Limiter largeur
     p_sig_name.drawOn(c, sig_name_text_x, y_signature_block_bottom + sig_name_h + style_signature_title.leading)
 
-    p_sig_title = Paragraph("Fondateur de RSV", style_signature_title) 
+    p_sig_title = Paragraph("CEO of IgbegaX", style_signature_title) 
     sig_title_w, sig_title_h = p_sig_title.wrapOn(c, content_width / 3, 15*mm)
     p_sig_title.drawOn(c, sig_name_text_x, y_signature_block_bottom + sig_name_h)
 
